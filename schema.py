@@ -5,6 +5,7 @@ from strawberry.types import Info
 from fastapi import FastAPI
 from strawberry.fastapi import BaseContext, GraphQLRouter
 from databases import Database
+from typing import Any
 
 from settings import Settings
 
@@ -33,19 +34,31 @@ class Book:
 
 @strawberry.type
 class Query:
-
     @strawberry.field
     async def books(
         self,
         info: Info[Context, None],
-        author_ids: list[int] | None = [],
+        author_ids: list[int] | None = None,
         search: str | None = None,
         limit: int | None = None,
     ) -> list[Book]:
-        # TODO:
-        # Do NOT use dataloaders
-        await info.context.db.execute("select 1")
-        return []
+        query = "SELECT * FROM books WHERE TRUE"
+        params : dict[str, Any] = {}
+
+        if author_ids is not None:
+            query += " AND author_id = ANY(:author_ids)"
+            params["author_ids"] = author_ids
+
+        if search is not None:
+            query += "AND title ILIKE :search"
+            params["search"] = f"%{search}%"
+
+        if limit is not None:
+            query += " LIMIT :limit"
+            params["limit"] = limit
+
+        rows = await info.context.db.fetch_all(query, params)
+        return [Book(title=row["title"], author=Author(name=row["author_id"])) for row in rows]
 
 
 
