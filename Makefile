@@ -1,5 +1,5 @@
 run:
-	poetry run uvicorn schema:app --reload
+	poetry run uvicorn schema:app --reload --host 0.0.0.0
 
 fmt:
 	ruff check -s --fix --exit-zero .
