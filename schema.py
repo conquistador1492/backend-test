@@ -42,7 +42,7 @@ class Query:
         search: str | None = None,
         limit: int | None = None,
     ) -> list[Book]:
-        query = "SELECT * FROM books WHERE TRUE"
+        query = "SELECT title, name FROM books LEFT JOIN authors ON authors.id = books.author_id WHERE TRUE"
         params : dict[str, Any] = {}
 
         if author_ids is not None:
@@ -50,7 +50,7 @@ class Query:
             params["author_ids"] = author_ids
 
         if search is not None:
-            query += "AND title ILIKE :search"
+            query += " AND title ILIKE :search"
             params["search"] = f"%{search}%"
 
         if limit is not None:
@@ -58,7 +58,7 @@ class Query:
             params["limit"] = limit
 
         rows = await info.context.db.fetch_all(query, params)
-        return [Book(title=row["title"], author=Author(name=row["author_id"])) for row in rows]
+        return [Book(title=row["title"], author=Author(name=row["name"])) for row in rows]
 
 
 
